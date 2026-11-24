@@ -1,0 +1,6 @@
+{
+  "name": "AFRINA AI Development Cloud",
+  "description": "Personal AI software factory for managing projects, AI agents, builds, deployments, and cloud engineering workflows from Android.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
