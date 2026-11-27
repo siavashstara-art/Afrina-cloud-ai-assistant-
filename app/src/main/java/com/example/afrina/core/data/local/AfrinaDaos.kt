@@ -86,3 +86,57 @@ interface AuditLogDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(entries: List<AuditLogEntity>)
 }
+
+@Dao
+interface AiUsageLedgerDao {
+    @Query("SELECT * FROM ai_usage_ledger ORDER BY timestampEpochMs DESC")
+    fun observeAll(): Flow<List<AiUsageLedgerEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(entry: AiUsageLedgerEntity)
+}
+
+@Dao
+interface PaidInferenceApprovalDao {
+    @Query("SELECT * FROM paid_inference_approvals ORDER BY createdAtEpochMs DESC")
+    fun observeAll(): Flow<List<PaidInferenceApprovalEntity>>
+
+    @Query("SELECT * FROM paid_inference_approvals WHERE id = :proposalId LIMIT 1")
+    suspend fun getById(proposalId: String): PaidInferenceApprovalEntity?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(item: PaidInferenceApprovalEntity)
+
+    @Query(
+        "UPDATE paid_inference_approvals SET status = :newStatus, updatedAtEpochMs = :updatedAt " +
+            "WHERE id = :proposalId AND status = :expectedStatus"
+    )
+    suspend fun transitionStatus(
+        proposalId: String,
+        expectedStatus: String,
+        newStatus: String,
+        updatedAt: Long,
+    ): Int
+
+    @Query(
+        "UPDATE paid_inference_approvals SET status = :executingStatus, updatedAtEpochMs = :updatedAt " +
+            "WHERE id = :proposalId AND status = :expectedStatus AND isExecuted = 0"
+    )
+    suspend fun claimForExecution(
+        proposalId: String,
+        expectedStatus: String,
+        executingStatus: String,
+        updatedAt: Long,
+    ): Int
+
+    @Query(
+        "UPDATE paid_inference_approvals SET status = :finalStatus, isExecuted = 1, updatedAtEpochMs = :updatedAt " +
+            "WHERE id = :proposalId AND status = :executingStatus AND isExecuted = 0"
+    )
+    suspend fun markExecutedFromExecuting(
+        proposalId: String,
+        executingStatus: String,
+        finalStatus: String,
+        updatedAt: Long,
+    ): Int
+}

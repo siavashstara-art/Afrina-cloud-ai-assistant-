@@ -38,10 +38,10 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.afrina.core.designsystem.AfrinaPalette
+import com.example.afrina.core.designsystem.AfrinaStudioHeroBanner
 import com.example.afrina.core.designsystem.AfrinaSurfaceCard
 import com.example.afrina.core.designsystem.KpiMetricTile
 import com.example.afrina.core.designsystem.MonoChip
-import com.example.afrina.core.designsystem.OriginBadge
 import com.example.afrina.core.designsystem.SectionHeader
 import com.example.afrina.core.designsystem.StatusPill
 import com.example.afrina.core.designsystem.healthColor
@@ -75,32 +75,14 @@ fun DashboardScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        // Phase 0 Truth-in-UI Banner
+        // AFRINA Creative Studio Hero Banner (Truth-in-UI)
         item {
-            AfrinaSurfaceCard(
+            AfrinaStudioHeroBanner(
+                title = strings.phase0BannerTitle,
+                subtitle = strings.phase0BannerDesc,
+                badgeOrigin = ImplementationOrigin.SIMULATED_PHASE_0,
                 modifier = Modifier.widthIn(max = 760.dp),
-                highlightColor = AfrinaPalette.VioletSimulated,
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    OriginBadge(origin = ImplementationOrigin.SIMULATED_PHASE_0)
-                    Text(
-                        text = strings.phase0BannerTitle,
-                        style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-                Spacer(Modifier.height(6.dp))
-                Text(
-                    text = strings.phase0BannerDesc,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+            )
         }
 
         // KPI Metrics Grid (2x2 clean mobile layout)
@@ -127,7 +109,7 @@ fun DashboardScreen(
                     KpiMetricTile(
                         label = strings.tasksOpenLabel,
                         value = openTasks.toString(),
-                        accent = AfrinaPalette.CobaltBlue,
+                        accent = AfrinaPalette.BronzeSimulated,
                         icon = Icons.Outlined.TaskAlt,
                         modifier = Modifier
                             .weight(1f)
@@ -141,7 +123,7 @@ fun DashboardScreen(
                     KpiMetricTile(
                         label = strings.approvalsPendingLabel,
                         value = uiState.pendingApprovals.size.toString(),
-                        accent = if (uiState.pendingApprovals.isNotEmpty()) AfrinaPalette.AmberWarning else AfrinaPalette.EmeraldHealthy,
+                        accent = if (uiState.pendingApprovals.isNotEmpty()) AfrinaPalette.OchreWarning else AfrinaPalette.SageHealthy,
                         icon = Icons.Outlined.Security,
                         modifier = Modifier
                             .weight(1f)
@@ -151,7 +133,7 @@ fun DashboardScreen(
                     KpiMetricTile(
                         label = strings.activeSandboxLabel,
                         value = (uiState.systemHealth?.activeSandboxContainers ?: 0).toString(),
-                        accent = AfrinaPalette.VioletSimulated,
+                        accent = AfrinaPalette.MutedSage,
                         icon = Icons.Outlined.Memory,
                         modifier = Modifier
                             .weight(1f)
@@ -245,7 +227,7 @@ fun DashboardScreen(
                             Icon(
                                 imageVector = if (isDone) Icons.Outlined.CheckCircle else Icons.Outlined.RadioButtonUnchecked,
                                 contentDescription = strings.taskDoneToggleDesc,
-                                tint = if (isDone) AfrinaPalette.EmeraldHealthy else MaterialTheme.colorScheme.primary,
+                                tint = if (isDone) AfrinaPalette.SageHealthy else MaterialTheme.colorScheme.primary,
                             )
                         }
                         Column(modifier = Modifier.weight(1f)) {
@@ -285,7 +267,7 @@ fun DashboardScreen(
         item {
             AfrinaSurfaceCard(
                 modifier = Modifier.widthIn(max = 760.dp),
-                highlightColor = AfrinaPalette.ElectricCyan,
+                highlightColor = AfrinaPalette.TerracottaCopper,
             ) {
                 uiState.activities.take(3).forEachIndexed { idx, activity ->
                     Column(modifier = Modifier.fillMaxWidth()) {
@@ -431,7 +413,7 @@ fun DashboardScreen(
             if (health != null) {
                 AfrinaSurfaceCard(
                     modifier = Modifier.widthIn(max = 760.dp),
-                    highlightColor = AfrinaPalette.EmeraldHealthy,
+                    highlightColor = AfrinaPalette.SageHealthy,
                 ) {
                     Text(
                         text = if (isFa) health.controlPlaneStatusFa else health.controlPlaneStatusEn,
@@ -458,6 +440,8 @@ fun DashboardScreen(
                             Spacer(Modifier.height(4.dp))
                             LinearProgressIndicator(
                                 progress = { health.cpuUsagePercent / 100f },
+                                color = MaterialTheme.colorScheme.primary,
+                                trackColor = MaterialTheme.colorScheme.surfaceVariant,
                                 modifier = Modifier.fillMaxWidth(),
                             )
                         }
@@ -470,6 +454,8 @@ fun DashboardScreen(
                             Spacer(Modifier.height(4.dp))
                             LinearProgressIndicator(
                                 progress = { health.memoryUsagePercent / 100f },
+                                color = MaterialTheme.colorScheme.tertiary,
+                                trackColor = MaterialTheme.colorScheme.surfaceVariant,
                                 modifier = Modifier.fillMaxWidth(),
                             )
                         }

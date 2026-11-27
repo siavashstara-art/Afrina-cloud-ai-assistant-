@@ -134,7 +134,7 @@ fun SettingsScreen(
         item {
             AfrinaSurfaceCard(
                 modifier = Modifier.widthIn(max = 760.dp),
-                highlightColor = if (uiState.hardwareVaultReady) AfrinaPalette.EmeraldHealthy else AfrinaPalette.AmberWarning,
+                highlightColor = if (uiState.hardwareVaultReady) AfrinaPalette.SageHealthy else AfrinaPalette.OchreWarning,
             ) {
                 Text(
                     text = strings.vaultReadyText,
@@ -145,7 +145,7 @@ fun SettingsScreen(
                 uiState.maskedStoredToken?.let { masked ->
                     StatusPill(
                         label = "AES-GCM Stored: $masked",
-                        color = AfrinaPalette.EmeraldHealthy,
+                        color = AfrinaPalette.SageHealthy,
                         mono = true,
                     )
                     Spacer(Modifier.height(8.dp))

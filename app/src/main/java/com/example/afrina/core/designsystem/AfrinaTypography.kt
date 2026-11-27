@@ -21,11 +21,18 @@ val JetBrainsMonoFontFamily = FontFamily(
 )
 
 val AfrinaTypography = Typography(
+    displaySmall = TextStyle(
+        fontFamily = VazirmatnFontFamily,
+        fontWeight = FontWeight.Bold,
+        fontSize = 28.sp,
+        lineHeight = 36.sp,
+        letterSpacing = (-0.25).sp,
+    ),
     headlineMedium = TextStyle(
         fontFamily = VazirmatnFontFamily,
         fontWeight = FontWeight.Bold,
-        fontSize = 24.sp,
-        lineHeight = 32.sp,
+        fontSize = 23.sp,
+        lineHeight = 31.sp,
     ),
     titleLarge = TextStyle(
         fontFamily = VazirmatnFontFamily,
@@ -49,25 +56,31 @@ val AfrinaTypography = Typography(
         fontFamily = VazirmatnFontFamily,
         fontWeight = FontWeight.Normal,
         fontSize = 15.sp,
-        lineHeight = 22.sp,
+        lineHeight = 23.sp,
     ),
     bodyMedium = TextStyle(
         fontFamily = VazirmatnFontFamily,
         fontWeight = FontWeight.Normal,
         fontSize = 13.5.sp,
-        lineHeight = 20.sp,
+        lineHeight = 21.sp,
     ),
     bodySmall = TextStyle(
         fontFamily = VazirmatnFontFamily,
         fontWeight = FontWeight.Normal,
         fontSize = 12.sp,
-        lineHeight = 17.sp,
+        lineHeight = 18.sp,
+    ),
+    labelLarge = TextStyle(
+        fontFamily = VazirmatnFontFamily,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 13.sp,
+        lineHeight = 18.sp,
     ),
     labelMedium = TextStyle(
         fontFamily = VazirmatnFontFamily,
         fontWeight = FontWeight.Medium,
         fontSize = 12.sp,
-        lineHeight = 16.sp,
+        lineHeight = 17.sp,
     ),
     labelSmall = TextStyle(
         fontFamily = JetBrainsMonoFontFamily,

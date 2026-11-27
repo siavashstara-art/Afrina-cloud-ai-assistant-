@@ -38,11 +38,14 @@ import com.example.afrina.core.designsystem.SectionHeader
 import com.example.afrina.core.designsystem.StatusPill
 import com.example.afrina.core.i18n.LocalAfrinaStrings
 import com.example.afrina.core.i18n.LocalAppLanguage
+import com.example.afrina.core.model.AfrinaPersona
 import com.example.afrina.core.model.AgentExecutionState
 import com.example.afrina.core.model.AgentRole
 import com.example.afrina.core.model.AppLanguage
 import com.example.afrina.core.model.ApprovalStatus
+import com.example.afrina.core.model.DataClassification
 import com.example.afrina.core.model.ImplementationOrigin
+import com.example.afrina.core.model.TaskComplexity
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -50,6 +53,19 @@ fun AgentsScreen(
     uiState: AgentsUiState,
     onResolveApproval: (String, Boolean) -> Unit,
     onSimulateAgent: (AgentRole) -> Unit,
+    onSelectPersona: (AfrinaPersona) -> Unit = {},
+    onSelectComplexity: (TaskComplexity) -> Unit = {},
+    onSelectClassification: (DataClassification) -> Unit = {},
+    onToggleVideoModality: (Boolean) -> Unit = {},
+    onToggleLocalOpenWeight: (Boolean) -> Unit = {},
+    onRunRouterTask: (Boolean) -> Unit = {},
+    onExhaustPrimaryQuota: () -> Unit = {},
+    onResetQuotas: () -> Unit = {},
+    onApprovePaidInference: (String) -> Unit = {},
+    onRejectPaidInference: (String) -> Unit = {},
+    onExecuteApprovedPaidTask: (String) -> Unit = {},
+    onToggleAffectiveFreeze: () -> Unit = {},
+    onResetAffectiveState: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val strings = LocalAfrinaStrings.current
@@ -64,6 +80,26 @@ fun AgentsScreen(
         verticalArrangement = Arrangement.spacedBy(14.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
+        // Free-First AI Router, $0 Spending Protection, Privacy Gate, Simulated Quotas & Cost Ledger
+        item(key = "free_first_router_panel") {
+            FreeFirstRouterPanel(
+                uiState = uiState,
+                onSelectPersona = onSelectPersona,
+                onSelectComplexity = onSelectComplexity,
+                onSelectClassification = onSelectClassification,
+                onToggleVideoModality = onToggleVideoModality,
+                onToggleLocalOpenWeight = onToggleLocalOpenWeight,
+                onRunRouterTask = onRunRouterTask,
+                onExhaustPrimaryQuota = onExhaustPrimaryQuota,
+                onResetQuotas = onResetQuotas,
+                onApprovePaidInference = onApprovePaidInference,
+                onRejectPaidInference = onRejectPaidInference,
+                onExecuteApprovedPaidTask = onExecuteApprovedPaidTask,
+                onToggleAffectiveFreeze = onToggleAffectiveFreeze,
+                onResetAffectiveState = onResetAffectiveState,
+            )
+        }
+
         // Human Approval Gate Section
         item {
             SectionHeader(
@@ -76,7 +112,7 @@ fun AgentsScreen(
             item {
                 AfrinaSurfaceCard(
                     modifier = Modifier.widthIn(max = 760.dp),
-                    highlightColor = AfrinaPalette.EmeraldHealthy,
+                    highlightColor = AfrinaPalette.SageHealthy,
                 ) {
                     Text(
                         text = strings.emptyApprovals,
@@ -91,7 +127,7 @@ fun AgentsScreen(
                     modifier = Modifier
                         .widthIn(max = 760.dp)
                         .testTag("approval_card_${approval.id}"),
-                    highlightColor = AfrinaPalette.AmberWarning,
+                    highlightColor = AfrinaPalette.OchreWarning,
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -99,7 +135,7 @@ fun AgentsScreen(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         MonoChip(text = approval.agentRole.name)
-                        StatusPill(label = approval.riskLevel.name, color = AfrinaPalette.AmberWarning, mono = true)
+                        StatusPill(label = approval.riskLevel.name, color = AfrinaPalette.OchreWarning, mono = true)
                     }
                     Spacer(Modifier.height(8.dp))
                     Text(
@@ -130,7 +166,10 @@ fun AgentsScreen(
                         }
                         Button(
                             onClick = { onResolveApproval(approval.id, true) },
-                            colors = ButtonDefaults.buttonColors(containerColor = AfrinaPalette.EmeraldHealthy),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = AfrinaPalette.SageHealthy,
+                                contentColor = AfrinaPalette.IvoryInkDark,
+                            ),
                             modifier = Modifier
                                 .weight(1f)
                                 .testTag("approve_${approval.id}"),
@@ -173,10 +212,10 @@ fun AgentsScreen(
         }
         items(uiState.agents, key = { it.role.name }) { agent ->
             val stateColor = when (agent.currentState) {
-                AgentExecutionState.RUNNING -> AfrinaPalette.ElectricCyan
-                AgentExecutionState.AWAITING_APPROVAL -> AfrinaPalette.AmberWarning
-                AgentExecutionState.COMPLETED -> AfrinaPalette.EmeraldHealthy
-                AgentExecutionState.IDLE -> AfrinaPalette.TextSecondaryDark
+                AgentExecutionState.RUNNING -> AfrinaPalette.TerracottaCopper
+                AgentExecutionState.AWAITING_APPROVAL -> AfrinaPalette.OchreWarning
+                AgentExecutionState.COMPLETED -> AfrinaPalette.SageHealthy
+                AgentExecutionState.IDLE -> AfrinaPalette.WarmTaupe
             }
             AfrinaSurfaceCard(
                 modifier = Modifier
@@ -226,7 +265,7 @@ fun AgentsScreen(
                 Text(
                     text = strings.gatedActionsLabel,
                     style = MaterialTheme.typography.labelMedium,
-                    color = AfrinaPalette.AmberWarning,
+                    color = AfrinaPalette.OchreWarning,
                 )
                 Spacer(Modifier.height(4.dp))
                 FlowRow(

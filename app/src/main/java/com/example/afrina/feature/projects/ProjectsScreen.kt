@@ -198,7 +198,7 @@ fun ProjectsScreen(
                                     Icon(
                                         imageVector = if (isDone) Icons.Outlined.CheckCircle else Icons.Outlined.RadioButtonUnchecked,
                                         contentDescription = strings.taskDoneToggleDesc,
-                                        tint = if (isDone) AfrinaPalette.EmeraldHealthy else MaterialTheme.colorScheme.primary,
+                                        tint = if (isDone) AfrinaPalette.SageHealthy else MaterialTheme.colorScheme.primary,
                                     )
                                 }
                                 Text(
@@ -264,6 +264,10 @@ private fun CreateProjectDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        shape = MaterialTheme.shapes.large,
+        containerColor = MaterialTheme.colorScheme.surface,
+        titleContentColor = MaterialTheme.colorScheme.onSurface,
+        textContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
         title = { Text(strings.addProject) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -322,6 +326,10 @@ private fun CreateTaskDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        shape = MaterialTheme.shapes.large,
+        containerColor = MaterialTheme.colorScheme.surface,
+        titleContentColor = MaterialTheme.colorScheme.onSurface,
+        textContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
         title = { Text("${strings.addTask} • $projectName") },
         text = {
             OutlinedTextField(

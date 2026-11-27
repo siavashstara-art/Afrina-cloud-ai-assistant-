@@ -58,6 +58,8 @@ enum class AgentExecutionState {
 enum class ApprovalStatus {
     PENDING,
     APPROVED,
+    EXECUTING,
+    FAILED,
     REJECTED,
 }
 
@@ -217,7 +219,7 @@ data class AuditLogEntry(
 
 data class UserPreferences(
     val language: AppLanguage = AppLanguage.PERSIAN,
-    val theme: ThemePreference = ThemePreference.DARK,
+    val theme: ThemePreference = ThemePreference.LIGHT,
     val activeControlPlaneUrl: String = "https://control.afrina.local (Phase 0 Mock)",
     val selectedAiModelId: String = "provider-agnostic/architect-v1",
 )

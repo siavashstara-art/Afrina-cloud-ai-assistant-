@@ -73,7 +73,8 @@ private class AfrinaViewModelFactory(
 
             AgentsViewModel::class.java -> AgentsViewModel(
                 agentRepository = container.agentRepository,
-                aiProviderGateway = container.aiProviderGateway,
+                aiRouterRepository = container.aiRouterRepository,
+                personaArchitectureRepository = container.personaArchitectureRepository,
             ) as T
 
             PipelinesViewModel::class.java -> PipelinesViewModel(

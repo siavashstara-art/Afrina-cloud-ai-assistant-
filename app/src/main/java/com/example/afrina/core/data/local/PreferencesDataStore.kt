@@ -24,7 +24,7 @@ class DataStorePreferencesRepository(private val context: Context) : Preferences
             } ?: AppLanguage.PERSIAN
             val theme = prefs[KEY_THEME]?.let { name ->
                 runCatching { ThemePreference.valueOf(name) }.getOrNull()
-            } ?: ThemePreference.DARK
+            } ?: ThemePreference.LIGHT
             val modelId = prefs[KEY_AI_MODEL] ?: "provider-agnostic/architect-v1"
             UserPreferences(
                 language = lang,

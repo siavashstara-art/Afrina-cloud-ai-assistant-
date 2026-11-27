@@ -162,7 +162,7 @@ fun PipelinesScreen(
                 }
                 if (dep.rollbackAvailable) {
                     Spacer(Modifier.height(8.dp))
-                    StatusPill(label = strings.rollbackReady, color = AfrinaPalette.ElectricCyan)
+                    StatusPill(label = strings.rollbackReady, color = AfrinaPalette.TerracottaCopper)
                 }
             }
         }

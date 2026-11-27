@@ -25,14 +25,17 @@ import androidx.compose.material.icons.outlined.SmartToy
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
+import androidx.compose.material3.NavigationRailItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -127,68 +130,90 @@ fun AfrinaRootShell(
         Scaffold(
             contentWindowInsets = WindowInsets.safeDrawing,
             topBar = {
-                TopAppBar(
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.background,
-                    ),
-                    title = {
-                        Column {
-                            Text(
-                                text = strings.appTitle,
-                                style = MaterialTheme.typography.titleMedium,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                            Text(
-                                text = strings.appSubtitle,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                        }
-                    },
-                    actions = {
-                        IconButton(
-                            onClick = { showNotifications = true },
-                            modifier = Modifier.testTag("notifications_button"),
-                        ) {
-                            BadgedBox(
-                                badge = {
-                                    if (dashboardState.unreadNotificationsCount > 0) {
-                                        Badge {
-                                            Text(dashboardState.unreadNotificationsCount.toString())
-                                        }
-                                    }
-                                }
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Outlined.Notifications,
-                                    contentDescription = strings.notificationsTitle,
+                Column {
+                    TopAppBar(
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = MaterialTheme.colorScheme.background,
+                            titleContentColor = MaterialTheme.colorScheme.onBackground,
+                        ),
+                        title = {
+                            Column {
+                                Text(
+                                    text = strings.appTitle,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                                Text(
+                                    text = strings.appSubtitle,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
                                 )
                             }
-                        }
-                    },
-                )
+                        },
+                        actions = {
+                            IconButton(
+                                onClick = { showNotifications = true },
+                                modifier = Modifier.testTag("notifications_button"),
+                            ) {
+                                BadgedBox(
+                                    badge = {
+                                        if (dashboardState.unreadNotificationsCount > 0) {
+                                            Badge(
+                                                containerColor = MaterialTheme.colorScheme.primary,
+                                                contentColor = MaterialTheme.colorScheme.onPrimary,
+                                            ) {
+                                                Text(dashboardState.unreadNotificationsCount.toString())
+                                            }
+                                        }
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Notifications,
+                                        contentDescription = strings.notificationsTitle,
+                                        tint = MaterialTheme.colorScheme.onBackground,
+                                    )
+                                }
+                            }
+                        },
+                    )
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.55f))
+                }
             },
             bottomBar = {
                 if (!useRail) {
-                    NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
-                        AfrinaDestination.entries.forEach { dest ->
-                            val selected = currentRoute == dest.route
-                            NavigationBarItem(
-                                selected = selected,
-                                onClick = { navigateTo(dest) },
-                                icon = { Icon(dest.icon, contentDescription = labelFor(dest)) },
-                                label = {
-                                    Text(
-                                        text = labelFor(dest),
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                },
-                                modifier = Modifier.testTag("nav_${dest.route}"),
+                    Column {
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.55f))
+                        NavigationBar(
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            tonalElevation = 0.dp,
+                        ) {
+                            val navItemColors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = MaterialTheme.colorScheme.primary,
+                                selectedTextColor = MaterialTheme.colorScheme.primary,
+                                indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
+                            AfrinaDestination.entries.forEach { dest ->
+                                val selected = currentRoute == dest.route
+                                NavigationBarItem(
+                                    selected = selected,
+                                    onClick = { navigateTo(dest) },
+                                    colors = navItemColors,
+                                    icon = { Icon(dest.icon, contentDescription = labelFor(dest)) },
+                                    label = {
+                                        Text(
+                                            text = labelFor(dest),
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                        )
+                                    },
+                                    modifier = Modifier.testTag("nav_${dest.route}"),
+                                )
+                            }
                         }
                     }
                 }
@@ -204,12 +229,20 @@ fun AfrinaRootShell(
                         modifier = Modifier.fillMaxHeight(),
                         containerColor = MaterialTheme.colorScheme.surface,
                     ) {
+                        val railColors = NavigationRailItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.primary,
+                            selectedTextColor = MaterialTheme.colorScheme.primary,
+                            indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                         Spacer(Modifier.height(12.dp))
                         AfrinaDestination.entries.forEach { dest ->
                             val selected = currentRoute == dest.route
                             NavigationRailItem(
                                 selected = selected,
                                 onClick = { navigateTo(dest) },
+                                colors = railColors,
                                 icon = { Icon(dest.icon, contentDescription = labelFor(dest)) },
                                 label = { Text(labelFor(dest)) },
                                 modifier = Modifier.testTag("rail_${dest.route}"),
@@ -246,6 +279,19 @@ fun AfrinaRootShell(
                                 uiState = agentsState,
                                 onResolveApproval = agentsViewModel::resolveApproval,
                                 onSimulateAgent = agentsViewModel::triggerSimulatedRun,
+                                onSelectPersona = agentsViewModel::selectPersona,
+                                onSelectComplexity = agentsViewModel::selectComplexity,
+                                onSelectClassification = agentsViewModel::selectClassification,
+                                onToggleVideoModality = agentsViewModel::toggleVideoModality,
+                                onToggleLocalOpenWeight = agentsViewModel::toggleLocalOpenWeight,
+                                onRunRouterTask = agentsViewModel::runSimulatedRouterTask,
+                                onExhaustPrimaryQuota = agentsViewModel::simulateExhaustPrimaryQuota,
+                                onResetQuotas = agentsViewModel::resetSimulatedQuotas,
+                                onApprovePaidInference = agentsViewModel::approvePaidInference,
+                                onRejectPaidInference = agentsViewModel::rejectPaidInference,
+                                onExecuteApprovedPaidTask = agentsViewModel::executeApprovedPaidTask,
+                                onToggleAffectiveFreeze = agentsViewModel::toggleAffectiveFreeze,
+                                onResetAffectiveState = agentsViewModel::resetAffectiveState,
                             )
                         }
                         composable(AfrinaDestination.Pipelines.route) {
@@ -289,7 +335,12 @@ private fun NotificationsSheet(
     onDismiss: () -> Unit,
 ) {
     val strings = LocalAfrinaStrings.current
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = MaterialTheme.colorScheme.surface,
+        contentColor = MaterialTheme.colorScheme.onSurface,
+        shape = MaterialTheme.shapes.large,
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -319,10 +370,10 @@ private fun NotificationsSheet(
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     items(notifications, key = { it.id }) { item ->
                         val sevColor = when (item.severity) {
-                            NotificationSeverity.SUCCESS -> AfrinaPalette.EmeraldHealthy
-                            NotificationSeverity.WARNING -> AfrinaPalette.AmberWarning
-                            NotificationSeverity.CRITICAL -> AfrinaPalette.RoseAlert
-                            NotificationSeverity.INFO -> AfrinaPalette.ElectricCyan
+                            NotificationSeverity.SUCCESS -> AfrinaPalette.SageHealthy
+                            NotificationSeverity.WARNING -> AfrinaPalette.OchreWarning
+                            NotificationSeverity.CRITICAL -> AfrinaPalette.RustAlert
+                            NotificationSeverity.INFO -> AfrinaPalette.TerracottaCopper
                         }
                         AfrinaSurfaceCard(highlightColor = sevColor) {
                             Row(

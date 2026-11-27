@@ -8,22 +8,25 @@ import com.example.afrina.core.data.local.DevTaskEntity
 import com.example.afrina.core.data.local.NotificationEntity
 import com.example.afrina.core.data.local.ProjectEntity
 import com.example.afrina.core.domain.AgentRepository
-import com.example.afrina.core.domain.AiCompletionRequest
-import com.example.afrina.core.domain.AiProviderGateway
+import com.example.afrina.core.domain.AiRouterRepository
 import com.example.afrina.core.domain.NotificationRepository
 import com.example.afrina.core.domain.PipelineRepository
 import com.example.afrina.core.domain.ProjectRepository
 import com.example.afrina.core.domain.VaultCryptoManager
+import com.example.afrina.core.model.AfrinaPersona
 import com.example.afrina.core.model.AfrinaProject
 import com.example.afrina.core.model.AgentActivity
 import com.example.afrina.core.model.AgentDefinition
 import com.example.afrina.core.model.AgentExecutionState
 import com.example.afrina.core.model.AgentRole
+import com.example.afrina.core.model.AiModality
+import com.example.afrina.core.model.AiRouteOutcome
 import com.example.afrina.core.model.ApprovalRequest
 import com.example.afrina.core.model.ApprovalStatus
 import com.example.afrina.core.model.AuditLogEntry
 import com.example.afrina.core.model.BuildPipelineRun
 import com.example.afrina.core.model.CloudNotification
+import com.example.afrina.core.model.DataClassification
 import com.example.afrina.core.model.DeploymentRecord
 import com.example.afrina.core.model.DeploymentTarget
 import com.example.afrina.core.model.DevTask
@@ -33,7 +36,9 @@ import com.example.afrina.core.model.NotificationSeverity
 import com.example.afrina.core.model.PipelineStatus
 import com.example.afrina.core.model.ProjectHealthStatus
 import com.example.afrina.core.model.SystemHealthSnapshot
+import com.example.afrina.core.model.TaskComplexity
 import com.example.afrina.core.model.TaskPriority
+import com.example.afrina.core.model.TaskRoutingRequest
 import com.example.afrina.core.model.TaskStatus
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -139,7 +144,7 @@ class LocalProjectRepository(
 
 class SimulatedAgentRepository(
     private val db: AfrinaDatabase,
-    private val aiGateway: AiProviderGateway,
+    private val aiRouterRepository: AiRouterRepository,
 ) : AgentRepository {
 
     private val agentCatalog = MutableStateFlow(buildInitialAgentCatalog())
@@ -195,23 +200,63 @@ class SimulatedAgentRepository(
         promptSummary: String,
     ) {
         val now = System.currentTimeMillis()
-        val response = aiGateway.executePrompt(
-            AiCompletionRequest(
-                agentRole = role,
-                modelId = "provider-agnostic/architect-v1",
+        val (persona, complexity, requiresCoding) = role.toRoutingProfile()
+        val outcome = aiRouterRepository.executePersonaTask(
+            TaskRoutingRequest(
+                persona = persona,
+                taskTitle = "${role.name} • $projectId",
                 prompt = promptSummary,
-                contextProjectSlug = projectId,
+                complexity = complexity,
+                requiresCoding = requiresCoding,
+                requiresMultilingualFaEn = true,
+                requiredModalities = setOf(AiModality.TEXT),
+                dataClassification = DataClassification.PROJECT_CODE,
+                explicitSensitiveDataAuthorized = false,
+                explicitPaidApprovalId = null,
+                allowLocalOpenWeight = true,
             )
         )
+
+        val (summaryEn, summaryFa, toolInvoked, executionState, auditOutcome) = when (outcome) {
+            is AiRouteOutcome.Success -> AgentRoutingRecord(
+                summaryEn = outcome.outputEn,
+                summaryFa = outcome.outputFa,
+                toolInvoked = "central_ai_router:${outcome.providerId}/${outcome.modelId}",
+                executionState = AgentExecutionState.COMPLETED,
+                auditOutcome = "COMPLETED_CENTRAL_ROUTER",
+            )
+            is AiRouteOutcome.PaidApprovalRequired -> AgentRoutingRecord(
+                summaryEn = outcome.proposal.reasonEn,
+                summaryFa = outcome.proposal.reasonFa,
+                toolInvoked = "central_ai_router:paid_approval_gate",
+                executionState = AgentExecutionState.AWAITING_APPROVAL,
+                auditOutcome = "AWAITING_PAID_APPROVAL",
+            )
+            is AiRouteOutcome.PrivacyAuthorizationRequired -> AgentRoutingRecord(
+                summaryEn = outcome.messageEn,
+                summaryFa = outcome.messageFa,
+                toolInvoked = "central_ai_router:privacy_gate",
+                executionState = AgentExecutionState.AWAITING_APPROVAL,
+                auditOutcome = "BLOCKED_PRIVACY_GATE",
+            )
+            is AiRouteOutcome.PausedQuotaOrProviderUnavailable -> AgentRoutingRecord(
+                summaryEn = outcome.messageEn,
+                summaryFa = outcome.messageFa,
+                toolInvoked = "central_ai_router:paused",
+                executionState = AgentExecutionState.IDLE,
+                auditOutcome = "PAUSED_ZERO_SPEND",
+            )
+        }
+
         db.agentActivityDao().insert(
             AgentActivityEntity(
                 id = "act-${UUID.randomUUID().toString().take(8)}",
                 projectId = projectId,
                 agentRole = role.name,
-                summaryEn = response.outputTextEn,
-                summaryFa = response.outputTextFa,
-                toolInvoked = "ai_gateway.simulate",
-                state = AgentExecutionState.COMPLETED.name,
+                summaryEn = summaryEn,
+                summaryFa = summaryFa,
+                toolInvoked = toolInvoked,
+                state = executionState.name,
                 timestampLabel = "Just now",
                 createdAtEpochMs = now,
             )
@@ -220,13 +265,32 @@ class SimulatedAgentRepository(
             AuditLogEntity(
                 id = "aud-${UUID.randomUUID().toString().take(8)}",
                 actor = "Agent:${role.name}",
-                action = "SIMULATED_AI_PLAN",
+                action = "SIMULATED_AGENT_ROUTED",
                 target = projectId,
-                outcome = "COMPLETED_LOCAL_MOCK",
+                outcome = auditOutcome,
                 timestampEpochMs = now,
             )
         )
     }
+
+    private data class AgentRoutingRecord(
+        val summaryEn: String,
+        val summaryFa: String,
+        val toolInvoked: String,
+        val executionState: AgentExecutionState,
+        val auditOutcome: String,
+    )
+
+    private fun AgentRole.toRoutingProfile(): Triple<AfrinaPersona, TaskComplexity, Boolean> =
+        when (this) {
+            AgentRole.ARCHITECT -> Triple(AfrinaPersona.ARCHITECT_STRATEGIST, TaskComplexity.STANDARD, false)
+            AgentRole.PROGRAMMER -> Triple(AfrinaPersona.BUILDER_ENGINEER, TaskComplexity.STANDARD, true)
+            AgentRole.CODE_REVIEWER -> Triple(AfrinaPersona.BUILDER_ENGINEER, TaskComplexity.STANDARD, true)
+            AgentRole.DEBUGGER -> Triple(AfrinaPersona.BUILDER_ENGINEER, TaskComplexity.STANDARD, true)
+            AgentRole.TESTER -> Triple(AfrinaPersona.BUILDER_ENGINEER, TaskComplexity.STANDARD, true)
+            AgentRole.SECURITY_AUDITOR -> Triple(AfrinaPersona.GUARDIAN_SENTINEL, TaskComplexity.COMPLEX_REASONING, false)
+            AgentRole.DEPLOYMENT_ASSISTANT -> Triple(AfrinaPersona.ARCHITECT_STRATEGIST, TaskComplexity.STANDARD, false)
+        }
 
     private fun buildInitialAgentCatalog(): List<AgentDefinition> = listOf(
         AgentDefinition(

@@ -82,3 +82,45 @@ data class AuditLogEntity(
     val outcome: String,
     val timestampEpochMs: Long,
 )
+
+@Entity(tableName = "ai_usage_ledger")
+data class AiUsageLedgerEntity(
+    @PrimaryKey val id: String,
+    val persona: String,
+    val providerId: String,
+    val modelId: String,
+    val taskTitle: String,
+    val usageCategory: String,
+    val dataClassification: String,
+    val routingKind: String,
+    val fallbackTriggered: Boolean,
+    val fallbackReason: String?,
+    val inputTokens: Int,
+    val outputTokens: Int,
+    val estimatedApiCostUsd: Double,
+    val estimatedInfraCostUsd: Double,
+    val isSimulated: Boolean,
+    val timestampEpochMs: Long,
+)
+
+@Entity(tableName = "paid_inference_approvals")
+data class PaidInferenceApprovalEntity(
+    @PrimaryKey val id: String,
+    val persona: String,
+    val taskTitle: String,
+    val complexity: String,
+    val requiresCoding: Boolean,
+    val requiredModalitiesCsv: String,
+    val dataClassification: String,
+    val explicitSensitiveAuthorized: Boolean,
+    val targetProviderId: String,
+    val targetModelId: String,
+    val estimatedCostUsd: Double,
+    val reasonEn: String,
+    val reasonFa: String,
+    val status: String,
+    val isExecuted: Boolean,
+    val isSimulated: Boolean,
+    val createdAtEpochMs: Long,
+    val updatedAtEpochMs: Long,
+)
