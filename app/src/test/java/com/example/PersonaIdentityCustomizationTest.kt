@@ -20,6 +20,9 @@ import com.example.afrina.core.persona.SubjectAgePolicyStatus
 import com.example.afrina.core.persona.TenantScope
 import com.example.afrina.core.persona.VisualStylePreset
 import com.example.afrina.core.persona.VoiceCustomizationConfig
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
+import com.example.afrina.core.data.local.AfrinaDatabase
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -27,7 +30,12 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [36])
 class PersonaIdentityCustomizationTest {
 
     @Test
@@ -396,5 +404,75 @@ class PersonaIdentityCustomizationTest {
         )
         assertTrue(unauthAvatarLink.isFailure)
         assertFalse(engine.observeTenantWorkspace(master).first().digitalTwinProfile.likenessAuthorized)
+    }
+
+    @Test
+    fun `persona identities revisions media assets twin profiles and memories persist across application restart and migration`() = runTest {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val dbName = "restart_persistence_test.db"
+        context.deleteDatabase(dbName)
+
+        val db = AfrinaDatabase.build(context, dbName)
+        val engine = PersonaIdentityEngine(database = db)
+        val master = TenantScope.MasterOwner
+
+        engine.updatePersonaIdentity(
+            tenantScope = master,
+            persona = AfrinaPersona.ARCHITECT_STRATEGIST,
+            customName = "Persistent Architect",
+            changeSummary = "Testing restart persistence",
+        ).getOrThrow()
+
+        val photo = engine.registerAuthorizedMediaAsset(
+            tenantScope = master,
+            kind = MediaAssetKind.PHOTOGRAPH,
+            privateVaultAlias = "vault://restart/photo",
+            mimeType = "image/jpeg",
+            explicitLikenessOrVoiceAuthorized = true,
+            subjectAgeStatus = SubjectAgePolicyStatus.VERIFIED_ADULT_18_PLUS,
+        ).getOrThrow()
+
+        engine.updateDigitalTwinProfile(
+            tenantScope = master,
+            likenessAuthorized = true,
+            voiceAuthorized = false,
+            subjectAgeStatus = SubjectAgePolicyStatus.VERIFIED_ADULT_18_PLUS,
+            authorizedPhotoAssetIds = listOf(photo.id),
+            communicationStyleSummary = "Persisted style",
+        ).getOrThrow()
+
+        engine.recordTenantMemory(
+            tenantScope = master,
+            layer = MemoryLayer.LONG_TERM_SEMANTIC_PREFERENCE,
+            contentSummary = "Persistent memory fact",
+            sourcePersona = AfrinaPersona.GUARDIAN_SENTINEL,
+            dataClassification = DataClassification.OWNER_PRIVATE,
+            ownerDirect = true,
+        ).getOrThrow()
+
+        db.close()
+
+        val dbRestarted = AfrinaDatabase.build(context, dbName)
+        val engineRestarted = PersonaIdentityEngine(database = dbRestarted)
+
+        val snapshot = engineRestarted.observeTenantWorkspace(master).first()
+        assertEquals("Persistent Architect", snapshot.currentConfigs.getValue(AfrinaPersona.ARCHITECT_STRATEGIST).customName)
+        assertEquals(2, snapshot.revisionsByPersona[AfrinaPersona.ARCHITECT_STRATEGIST]?.size)
+        assertEquals(1, snapshot.mediaAssets.size)
+        assertEquals("vault://restart/photo", snapshot.mediaAssets.first().privateVaultAlias)
+        assertTrue(snapshot.digitalTwinProfile.likenessAuthorized)
+        assertEquals(1, snapshot.tenantMemoryCount)
+
+        // Verify rollback works after restart using persisted revision history
+        val rolledBack = engineRestarted.rollbackPersonaConfiguration(
+            tenantScope = master,
+            persona = AfrinaPersona.ARCHITECT_STRATEGIST,
+            targetVersion = 1,
+        ).getOrThrow()
+        assertEquals(3, rolledBack.version)
+        assertEquals("Architect", rolledBack.configuration.customName)
+
+        dbRestarted.close()
+        context.deleteDatabase(dbName)
     }
 }

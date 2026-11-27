@@ -83,6 +83,7 @@ class AfrinaContainer(context: Context) {
     val personaIdentityRepository: PersonaIdentityCustomizationRepository = PersonaIdentityEngine(
         masterMemoryManager = masterMemoryManager,
         auditLogDao = database.auditLogDao(),
+        database = database,
     )
     val voiceConversationRepository: VoiceConversationRepository = RealTimeVoiceConversationEngine(
         personaArchitectureRepository = personaArchitectureRepository,

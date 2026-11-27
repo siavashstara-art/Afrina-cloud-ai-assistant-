@@ -192,6 +192,13 @@ class SharedMemoryManager {
         )
     }
 
+    @Synchronized
+    fun restoreEntry(entry: SharedMemoryEntry) {
+        if (entriesFlow.value.none { it.id == entry.id }) {
+            entriesFlow.value = listOf(entry) + entriesFlow.value
+        }
+    }
+
     private fun replaceEntry(updated: SharedMemoryEntry) {
         entriesFlow.value = entriesFlow.value.map { if (it.id == updated.id) updated else it }
     }

@@ -12,7 +12,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.FactCheck
+import androidx.compose.material.icons.automirrored.outlined.FactCheck
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Key
 import androidx.compose.material.icons.outlined.Language
@@ -185,7 +185,7 @@ fun SettingsScreen(
         item {
             SectionHeader(
                 title = strings.capabilityMatrixTitle,
-                icon = Icons.Outlined.FactCheck,
+                icon = Icons.AutoMirrored.Outlined.FactCheck,
             )
         }
         item {

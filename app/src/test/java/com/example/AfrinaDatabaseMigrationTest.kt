@@ -68,9 +68,9 @@ class AfrinaDatabaseMigrationTest {
         )
         helper.writableDatabase.close()
 
-        // Open with Room v2 and MIGRATION_1_2
+        // Open with Room v3 and migrations 1->2 and 2->3
         val roomDb = Room.databaseBuilder(context, AfrinaDatabase::class.java, dbName)
-            .addMigrations(AfrinaDatabase.MIGRATION_1_2)
+            .addMigrations(AfrinaDatabase.MIGRATION_1_2, AfrinaDatabase.MIGRATION_2_3)
             .allowMainThreadQueries()
             .build()
 
@@ -128,6 +128,60 @@ class AfrinaDatabaseMigrationTest {
             assertTrue(execOutcome is AiRouteOutcome.Success)
             assertTrue(roomDb.paidInferenceApprovalDao().getById(proposalId)!!.isExecuted)
             assertEquals(1, roomDb.aiUsageLedgerDao().observeAll().first().size)
+
+            // 4. Verify complete v1 -> v3 migration chain created all v3 persona identity tables
+            assertTrue(roomDb.personaIdentityDao().getForTenant("master").isEmpty())
+            assertTrue(roomDb.identityMediaAssetDao().getForTenant("master").isEmpty())
+            assertTrue(roomDb.customerOnboardingDao().getAll().isEmpty())
+            assertTrue(roomDb.sharedMemoryDao().getForTenant("master").isEmpty())
+        } finally {
+            roomDb.close()
+            context.deleteDatabase(dbName)
+        }
+    }
+
+    @Test
+    fun `migration 2 to 3 preserves existing v2 records and adds persona identity tables`() = runTest {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val dbName = "migration_v2_to_v3_test.db"
+        context.deleteDatabase(dbName)
+
+        val helper = FrameworkSQLiteOpenHelperFactory().create(
+            SupportSQLiteOpenHelper.Configuration.builder(context)
+                .name(dbName)
+                .callback(object : SupportSQLiteOpenHelper.Callback(2) {
+                    override fun onCreate(db: SupportSQLiteDatabase) {
+                        db.execSQL("CREATE TABLE IF NOT EXISTS `projects` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `nameFa` TEXT NOT NULL, `slug` TEXT NOT NULL, `description` TEXT NOT NULL, `descriptionFa` TEXT NOT NULL, `stackTagsCsv` TEXT NOT NULL, `healthStatus` TEXT NOT NULL, `repoFullName` TEXT NOT NULL, `defaultBranch` TEXT NOT NULL, `lastCommitSha` TEXT NOT NULL, `lastBuildStatus` TEXT NOT NULL, `activeEnvironment` TEXT NOT NULL, `updatedAtEpochMs` INTEGER NOT NULL, PRIMARY KEY(`id`))")
+                        db.execSQL("CREATE TABLE IF NOT EXISTS `dev_tasks` (`id` TEXT NOT NULL, `projectId` TEXT NOT NULL, `title` TEXT NOT NULL, `titleFa` TEXT NOT NULL, `priority` TEXT NOT NULL, `status` TEXT NOT NULL, `assignedAgent` TEXT, `requiresApproval` INTEGER NOT NULL, `updatedAtEpochMs` INTEGER NOT NULL, PRIMARY KEY(`id`))")
+                        db.execSQL("CREATE TABLE IF NOT EXISTS `approval_requests` (`id` TEXT NOT NULL, `projectId` TEXT NOT NULL, `agentRole` TEXT NOT NULL, `actionTitleEn` TEXT NOT NULL, `actionTitleFa` TEXT NOT NULL, `commandPreview` TEXT NOT NULL, `riskLevel` TEXT NOT NULL, `status` TEXT NOT NULL, `createdAtEpochMs` INTEGER NOT NULL, PRIMARY KEY(`id`))")
+                        db.execSQL("CREATE TABLE IF NOT EXISTS `agent_activities` (`id` TEXT NOT NULL, `projectId` TEXT NOT NULL, `agentRole` TEXT NOT NULL, `summaryEn` TEXT NOT NULL, `summaryFa` TEXT NOT NULL, `toolInvoked` TEXT NOT NULL, `state` TEXT NOT NULL, `timestampLabel` TEXT NOT NULL, `createdAtEpochMs` INTEGER NOT NULL, PRIMARY KEY(`id`))")
+                        db.execSQL("CREATE TABLE IF NOT EXISTS `notifications` (`id` TEXT NOT NULL, `titleEn` TEXT NOT NULL, `titleFa` TEXT NOT NULL, `bodyEn` TEXT NOT NULL, `bodyFa` TEXT NOT NULL, `severity` TEXT NOT NULL, `isRead` INTEGER NOT NULL, `timestampLabel` TEXT NOT NULL, `createdAtEpochMs` INTEGER NOT NULL, PRIMARY KEY(`id`))")
+                        db.execSQL("CREATE TABLE IF NOT EXISTS `audit_logs` (`id` TEXT NOT NULL, `actor` TEXT NOT NULL, `action` TEXT NOT NULL, `target` TEXT NOT NULL, `outcome` TEXT NOT NULL, `timestampEpochMs` INTEGER NOT NULL, PRIMARY KEY(`id`))")
+                        db.execSQL("CREATE TABLE IF NOT EXISTS `ai_usage_ledger` (`id` TEXT NOT NULL, `persona` TEXT NOT NULL, `providerId` TEXT NOT NULL, `modelId` TEXT NOT NULL, `taskTitle` TEXT NOT NULL, `usageCategory` TEXT NOT NULL, `dataClassification` TEXT NOT NULL, `routingKind` TEXT NOT NULL, `fallbackTriggered` INTEGER NOT NULL, `fallbackReason` TEXT, `inputTokens` INTEGER NOT NULL, `outputTokens` INTEGER NOT NULL, `estimatedApiCostUsd` REAL NOT NULL, `estimatedInfraCostUsd` REAL NOT NULL, `isSimulated` INTEGER NOT NULL, `timestampEpochMs` INTEGER NOT NULL, PRIMARY KEY(`id`))")
+                        db.execSQL("CREATE TABLE IF NOT EXISTS `paid_inference_approvals` (`id` TEXT NOT NULL, `persona` TEXT NOT NULL, `taskTitle` TEXT NOT NULL, `complexity` TEXT NOT NULL, `requiresCoding` INTEGER NOT NULL, `requiredModalitiesCsv` TEXT NOT NULL, `dataClassification` TEXT NOT NULL, `explicitSensitiveAuthorized` INTEGER NOT NULL, `targetProviderId` TEXT NOT NULL, `targetModelId` TEXT NOT NULL, `estimatedCostUsd` REAL NOT NULL, `reasonEn` TEXT NOT NULL, `reasonFa` TEXT NOT NULL, `status` TEXT NOT NULL, `isExecuted` INTEGER NOT NULL, `isSimulated` INTEGER NOT NULL, `createdAtEpochMs` INTEGER NOT NULL, `updatedAtEpochMs` INTEGER NOT NULL, PRIMARY KEY(`id`))")
+                        db.execSQL("INSERT INTO `ai_usage_ledger` VALUES ('ledger-v2', 'ARCHITECT_STRATEGIST', 'prov-1', 'model-1', 'Task V2', 'FREE_TIER', 'PROJECT_CODE', 'EXTERNAL_CLOUD', 0, NULL, 10, 20, 0.0, 0.0, 1, 2000)")
+                    }
+
+                    override fun onUpgrade(db: SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
+                })
+                .build()
+        )
+        helper.writableDatabase.close()
+
+        val roomDb = Room.databaseBuilder(context, AfrinaDatabase::class.java, dbName)
+            .addMigrations(AfrinaDatabase.MIGRATION_2_3)
+            .allowMainThreadQueries()
+            .build()
+
+        try {
+            val ledgerItems = roomDb.aiUsageLedgerDao().observeAll().first()
+            assertEquals(1, ledgerItems.size)
+            assertEquals("ledger-v2", ledgerItems.first().id)
+
+            assertTrue(roomDb.personaIdentityDao().getForTenant("master").isEmpty())
+            assertTrue(roomDb.identityMediaAssetDao().getForTenant("master").isEmpty())
+            assertTrue(roomDb.customerOnboardingDao().getAll().isEmpty())
+            assertTrue(roomDb.sharedMemoryDao().getForTenant("master").isEmpty())
         } finally {
             roomDb.close()
             context.deleteDatabase(dbName)

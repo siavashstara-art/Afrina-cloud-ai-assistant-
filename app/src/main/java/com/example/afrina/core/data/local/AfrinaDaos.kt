@@ -140,3 +140,70 @@ interface PaidInferenceApprovalDao {
         updatedAt: Long,
     ): Int
 }
+
+
+@Dao
+interface PersonaIdentityDao {
+    @Query("SELECT * FROM persona_identities WHERE tenantKey = :tenantKey")
+    suspend fun getForTenant(tenantKey: String): List<PersonaIdentityConfigEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(entity: PersonaIdentityConfigEntity)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(entities: List<PersonaIdentityConfigEntity>)
+
+    @Query("SELECT * FROM persona_identity_revisions WHERE tenantKey = :tenantKey AND persona = :persona ORDER BY version DESC")
+    suspend fun getRevisions(tenantKey: String, persona: String): List<PersonaIdentityRevisionEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertRevision(revision: PersonaIdentityRevisionEntity)
+}
+
+@Dao
+interface IdentityMediaAssetDao {
+    @Query("SELECT * FROM identity_media_assets WHERE ownerTenantKey = :tenantKey")
+    suspend fun getForTenant(tenantKey: String): List<IdentityMediaAssetEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(asset: IdentityMediaAssetEntity)
+
+    @Query("DELETE FROM identity_media_assets WHERE id = :assetId AND ownerTenantKey = :tenantKey")
+    suspend fun deleteById(assetId: String, tenantKey: String): Int
+
+    @Query("UPDATE identity_media_assets SET explicitLikenessOrVoiceAuthorized = 0 WHERE id = :assetId AND ownerTenantKey = :tenantKey")
+    suspend fun revokeAuthorization(assetId: String, tenantKey: String): Int
+}
+
+@Dao
+interface DigitalTwinProfileDao {
+    @Query("SELECT * FROM digital_twin_profiles WHERE tenantKey = :tenantKey LIMIT 1")
+    suspend fun getForTenant(tenantKey: String): DigitalTwinProfileEntity?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(profile: DigitalTwinProfileEntity)
+}
+
+@Dao
+interface CustomerOnboardingDao {
+    @Query("SELECT * FROM customer_onboardings WHERE customerId = :customerId LIMIT 1")
+    suspend fun getById(customerId: String): CustomerOnboardingEntity?
+
+    @Query("SELECT * FROM customer_onboardings")
+    suspend fun getAll(): List<CustomerOnboardingEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(profile: CustomerOnboardingEntity)
+}
+
+@Dao
+interface SharedMemoryDao {
+    @Query("SELECT * FROM shared_memories WHERE tenantKey = :tenantKey ORDER BY updatedAtEpochMs DESC")
+    suspend fun getForTenant(tenantKey: String): List<SharedMemoryEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(memory: SharedMemoryEntity)
+
+    @Query("DELETE FROM shared_memories WHERE id = :id")
+    suspend fun deleteById(id: String): Int
+}

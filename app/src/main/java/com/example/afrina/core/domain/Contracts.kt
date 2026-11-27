@@ -271,6 +271,10 @@ interface PersonaIdentityCustomizationRepository {
         tenantScope: TenantScope,
         capability: CustomerWorkspaceCapability,
     ): DevelopmentPermissionDecision
+
+    suspend fun revokeMediaAuthorization(tenantScope: TenantScope, assetId: String): Result<Boolean>
+    suspend fun deleteMediaAsset(tenantScope: TenantScope, assetId: String): Result<Boolean>
+    suspend fun deleteTenantMemory(tenantScope: TenantScope, memoryId: String): Result<Boolean>
 }
 
 interface VoiceConversationRepository {

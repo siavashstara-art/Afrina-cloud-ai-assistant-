@@ -124,3 +124,125 @@ data class PaidInferenceApprovalEntity(
     val createdAtEpochMs: Long,
     val updatedAtEpochMs: Long,
 )
+
+
+@Entity(tableName = "persona_identities", primaryKeys = ["tenantKey", "persona"])
+data class PersonaIdentityConfigEntity(
+    val tenantKey: String,
+    val persona: String,
+    val customName: String,
+    val identitySubtitleEn: String,
+    val identitySubtitleFa: String,
+    val roleSummaryEn: String,
+    val roleSummaryFa: String,
+    val responsibilitiesCsv: String,
+    val warmth: Double,
+    val formality: Double,
+    val directness: Double,
+    val empathy: Double,
+    val technicalDepth: Double,
+    val communicationStyleEn: String,
+    val communicationStyleFa: String,
+    val vocabularyNotesCsv: String,
+    val knowledgeScopeTagsCsv: String,
+    val behavioralInstructions: String,
+    val voiceProfileName: String,
+    val voiceGender: String,
+    val pitchOffset: Double,
+    val speakingRate: Double,
+    val preferredLocaleTag: String,
+    val authorizedVoiceAssetId: String?,
+    val avatarProfileId: String,
+    val distinctFaceIdentityId: String?,
+    val clothingStyle: String,
+    val appearanceNotes: String,
+    val visualStylePreset: String,
+    val presentationMode: String,
+    val animationIntensity: Double,
+    val idleMotionEnabled: Boolean,
+    val authorizedPhotoAssetIdsCsv: String,
+    val authorizedVideoAssetIdsCsv: String,
+    val preferredLanguage: String,
+    val responseLength: String,
+    val proactivityLevel: Double,
+    val confirmBeforeExternalActions: Boolean,
+    val securityRoleAnchor: String,
+    val minimumDataClassification: String,
+    val updatedAtEpochMs: Long,
+)
+
+@Entity(tableName = "persona_identity_revisions")
+data class PersonaIdentityRevisionEntity(
+    @PrimaryKey val id: String,
+    val tenantKey: String,
+    val persona: String,
+    val version: Int,
+    val configurationJson: String,
+    val changeSummary: String,
+    val changedAtEpochMs: Long,
+)
+
+@Entity(tableName = "identity_media_assets")
+data class IdentityMediaAssetEntity(
+    @PrimaryKey val id: String,
+    val ownerTenantKey: String,
+    val kind: String,
+    val privateVaultAlias: String,
+    val mimeType: String,
+    val distinctFaceIdentityId: String?,
+    val durationMs: Long?,
+    val explicitLikenessOrVoiceAuthorized: Boolean,
+    val subjectAgeStatus: String,
+    val createdAtEpochMs: Long,
+)
+
+@Entity(tableName = "digital_twin_profiles")
+data class DigitalTwinProfileEntity(
+    @PrimaryKey val tenantKey: String,
+    val gender: String,
+    val likenessAuthorized: Boolean,
+    val voiceAuthorized: Boolean,
+    val subjectAgeStatus: String,
+    val authorizedPhotoAssetIdsCsv: String,
+    val authorizedVideoAssetIdsCsv: String,
+    val authorizedVoiceAssetIdsCsv: String,
+    val communicationStyleSummary: String?,
+    val approvedVocabularyCsv: String,
+    val approvedKnowledgeMemoryIdsCsv: String,
+    val editablePersonalityJson: String?,
+    val behaviorNotes: String?,
+    val updatedAtEpochMs: Long,
+)
+
+@Entity(tableName = "customer_onboardings")
+data class CustomerOnboardingEntity(
+    @PrimaryKey val customerId: String,
+    val displayName: String,
+    val status: String,
+    val subjectAgeStatus: String,
+    val contentPolicyAccepted: Boolean,
+    val likenessUseAuthorized: Boolean,
+    val voiceUseAuthorized: Boolean,
+    val createdAtEpochMs: Long,
+)
+
+@Entity(tableName = "shared_memories")
+data class SharedMemoryEntity(
+    @PrimaryKey val id: String,
+    val tenantKey: String,
+    val layer: String,
+    val contentSummary: String,
+    val dataClassification: String,
+    val sourcePersona: String,
+    val sourceKind: String,
+    val sourceReferenceId: String,
+    val lastReviewedByOwner: Boolean,
+    val recordedAtEpochMs: Long,
+    val confidence: Double,
+    val reviewStatus: String,
+    val ownerCorrectionNote: String?,
+    val projectId: String?,
+    val preferenceKey: String?,
+    val verifiedExperienceCount: Int,
+    val updatedAtEpochMs: Long,
+)
